@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIX Football Manager - Character Creator</title>
+
+<meta property="og:title" content="PIX Football Manager - Character Creator">
+<meta property="og:description" content="Generate randomized football players.">
+<meta property="og:url" content="https://green-credit-82e5.ramzanekopixelart.workers.dev/">
+<meta property="og:image" content="https://green-credit-82e5.ramzanekopixelart.workers.dev/logo.png">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1d4ed8">
+
+<style>
+body{
+font-family:Arial,sans-serif;
+background:#081326 url('background.png') center/cover fixed;
+color:white;text-align:center;padding:20px;
+}
+canvas{
+width:370px;height:340px;
+image-rendering:pixelated;
+border:3px solid #3f7cff;
+background:#000;
+}
+button{
+margin:4px;padding:10px 14px;
+background:#1d4ed8;color:white;
+border:1px solid #5da3ff;
+border-radius:8px;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<img src="logo.png" style="max-width:520px;width:95%">
+
+<div>
+<canvas id="canvas" width="74" height="68"></canvas>
+</div>
+
+<div>
+<button onclick="randomizeAll()">🎲 Random All</button>
+<button onclick="randomSkinTone()">🎨 Skin Tone</button>
+<button onclick="randomLayer('jerseys')">👕 Jersey</button>
+<button onclick="randomLayer('hairs')">Hair</button>
+<button onclick="randomLayer('beard')">Beard</button>
+<button onclick="randomLayer('mouth')">Mouth</button>
+<button onclick="randomLayer('eyebrows')">Eyebrows</button>
+<button onclick="randomLayer('noses')">Nose</button>
+<button onclick="randomLayer('eyes')">Eyes</button>
+<button onclick="randomLayer('ears')">Ears</button>
+<button onclick="downloadPNG()">⬇ PNG</button>
+</div>
+
+<div id="info"></div>
+
+<script>
+
+const PARTS={
+skinTone:7,
+jerseys:10,
+hairs:145,
+beard:57,
+mouth:52,
+eyebrows:49,
+noses:50,
+eyes:48,
+ears:28
+};
+
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+
+const cache={};
+
+function pad(n){
+ return String(n).padStart(3,'0');
+}
+
+function rand(max){
+ return Math.floor(Math.random()*max)+1;
+}
+
+let current={};
+
+function createCharacter(){
+ current={
+  skinTone:rand(7),
+  jerseys:rand(10),
+  hairs:rand(145),
+  beard:rand(57),
+  mouth:rand(52),
+  eyebrows:rand(49),
+  noses:rand(50),
+  eyes:rand(48),
+  ears:rand(28)
+ };
+}
+
+function getPaths(){
+
+ const skin=pad(current.skinTone);
+ const folder='skintone'+skin.slice(1);
+
+ return {
+
+  jerseys:`layers/jerseys/jersey${pad(current.jerseys)}.png`,
+
+  base:`layers/${folder}/base${skin}.png`,
+
+  ears:`layers/${folder}/ears/ears${pad(current.ears)}.png`,
+
+  mouth:`layers/${folder}/mouths/mouth${pad(current.mouth)}.png`,
+
+  beard:`layers/beard/beard${pad(current.beard)}.png`,
+
+  noses:`layers/${folder}/noses/nose${pad(current.noses)}.png`,
+
+  eyes:`layers/${folder}/eyes/eyes${pad(current.eyes)}.png`,
+
+  eyebrows:`layers/${folder}/eyebrows/eyebrows${pad(current.eyebrows)}.png`,
+
+  hairs:`layers/hairs/hair${pad(current.hairs)}.png`
+ };
+}
+
+async function loadImage(src){
+
+ if(cache[src]) return cache[src];
+
+ return new Promise((resolve,reject)=>{
+
+  const img=new Image();
+
+  img.onload=()=>{
+   cache[src]=img;
+   resolve(img);
+  };
+
+  img.onerror=()=>reject(src);
+
+  img.src=src;
+
+ });
+}
+
+async function drawCharacter(){
+
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ const paths=getPaths();
+
+ const order=[
+ 'jerseys',
+ 'base',
+ 'ears',
+ 'mouth',
+ 'beard',
+ 'noses',
+ 'eyes',
+ 'eyebrows',
+ 'hairs'
+ ];
+
+ for(const layer of order){
+
+  try{
+
+   const img=await loadImage(paths[layer]);
+
+   ctx.drawImage(img,0,0);
+
+  }catch(e){
+
+   console.log('missing',e);
+
+  }
+
+ }
+
+ document.getElementById('info').innerHTML=`
+ Skin Tone: ${current.skinTone}<br>
+ Jersey: ${current.jerseys}<br>
+ Hair: ${current.hairs}<br>
+ Beard: ${current.beard}
+ `;
+}
+
+function randomizeAll(){
+ createCharacter();
+ drawCharacter();
+}
+
+function randomSkinTone(){
+ current.skinTone=rand(7);
+ drawCharacter();
+}
+
+function randomLayer(layer){
+ current[layer]=rand(PARTS[layer]);
+ drawCharacter();
+}
+
+function downloadPNG(){
+
+ const a=document.createElement('a');
+
+ a.download='player.png';
+
+ a.href=canvas.toDataURL('image/png');
+
+ a.click();
+}
+
+createCharacter();
+drawCharacter();
+
+</script>
+
+</body>
+</html>
